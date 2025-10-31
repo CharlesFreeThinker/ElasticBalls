@@ -1,105 +1,106 @@
 #include "raylib.h"
 #include "raymath.h"
 
-#define SCREEN_WIDTH 300
-#define SCREEN_HEIGHT 300
+#define SCREEN_WIDTH 1000
+#define SCREEN_HEIGHT 1000
 #define FPS 60
 #define RADIUS 25.f
-
+#define MAX_BALLS 20
 
 int main(void)
 {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "BALLS");
 
-  Vector2 PosA = {100, 200};
-  Vector2 PosB = {200, 200};
+  Vector2 Pos[MAX_BALLS];
+  Vector2 Vel[MAX_BALLS];
+  Color Colour[MAX_BALLS];
 
-  Vector2 VelA = {5.f, 4.f};
-  Vector2 VelB = {-3.f, -7.f};
+  for (int i = 0; i < MAX_BALLS; i++)
+  {
+    Pos[i].x = GetRandomValue(RADIUS, SCREEN_WIDTH - RADIUS);
+    Pos[i].y = GetRandomValue(RADIUS, SCREEN_HEIGHT - RADIUS);
+
+    Vel[i].x = GetRandomValue(-5, 5);
+    Vel[i].y = GetRandomValue(-5, 5);
   
-
+    Colour[i].r = GetRandomValue(0,255);
+    Colour[i].g = GetRandomValue(0,255);
+    Colour[i].b = GetRandomValue(0,255);
+    Colour[i].a = 255;
+  }
+  
   SetTargetFPS(FPS);
   while(!WindowShouldClose())
   {
-    PosA = Vector2Add(PosA, VelA);
-    PosB = Vector2Add(PosB, VelB);
+    for (int i = 0; i < MAX_BALLS; i++)
+    {
+      Pos[i] = Vector2Add(Pos[i], Vel[i]);
+        
+      //Border Collision
+      if(Pos[i].x < RADIUS)
+      {
+        Pos[i].x = RADIUS;
+        Vel[i].x *= -1;
+      }
+      else if(Pos[i].x > SCREEN_WIDTH - RADIUS)
+      {
+        Pos[i].x = SCREEN_WIDTH - RADIUS;
+        Vel[i].x *= -1;
+      }
+      if(Pos[i].y < RADIUS)
+      {
+        Pos[i].y = RADIUS;
+        Vel[i].y *= -1;
+      }
+      else if(Pos[i].y > SCREEN_HEIGHT - RADIUS)
+      {
+        Pos[i].y = SCREEN_HEIGHT - RADIUS;
+        Vel[i].y *= -1;
+      }
 
-    if(PosA.x >= SCREEN_WIDTH - RADIUS)
-    {
-      PosA.x = SCREEN_WIDTH - RADIUS;
-      VelA.x *= -1;
-    }
-    else if(PosA.x <= RADIUS)
-    {
-      PosA.x = RADIUS;
-      VelA.x *= -1;
-    }
-    if(PosB.x >= SCREEN_WIDTH - RADIUS)
-    {
-      PosB.x = SCREEN_WIDTH - RADIUS;
-      VelB.x *= -1;
-    }
-    else if(PosB.x <= RADIUS)
-    {
-      PosB.x = RADIUS;
-      VelB.x *= -1;
-    }
-    if(PosA.y >= SCREEN_HEIGHT - RADIUS)
-    {
-      PosA.y = SCREEN_HEIGHT - RADIUS;
-      VelA.y *= -1;
-    }
-    else if(PosA.y <= RADIUS)
-    {
-      PosA.y = RADIUS;
-      VelA.y *= -1;
-    }
-    if(PosB.y >= SCREEN_HEIGHT - RADIUS)
-    {
-      PosB.y = SCREEN_HEIGHT - RADIUS;
-      VelB.y *= -1;
-    }
-    else if(PosB.y <= RADIUS)
-    {
-      PosB.y = RADIUS;
-      VelB.y *= -1;
-    }
-    
-    float Distance = Vector2Distance(PosA, PosB);
-    if(Distance < 2.f * RADIUS)
-    { 
-      /*seperate em*/
-      Vector2 normalized = Vector2Normalize(Vector2Subtract(PosA, PosB));
-      float displacement = (2.f * RADIUS - Distance) / 2.f;
-      Vector2 displacementVector = Vector2Scale(normalized, displacement);
+      for(int j = i + 1; j < MAX_BALLS; j++)
+      {
+        //its quite unrealistic if a ball is inside another ball...
+        if(Vector2Distance(Pos[i], Pos[j]) < 2.f * RADIUS)
+        {
+          //Seperation
+          Vector2 normalized = Vector2Normalize(Vector2Subtract(Pos[i], Pos[j]));
+          float displacement = (2.f * RADIUS - Vector2Distance(Pos[i], Pos[j])) / 2.f;
+          Vector2 displacementVector = Vector2Scale(normalized, displacement);
 
-      PosA = Vector2Add(PosA, displacementVector);
-      PosB = Vector2Subtract(PosB, displacementVector);
-      
-      /*v1' */ 
-      Vector2 PosDiffVectA = Vector2Subtract(PosA, PosB);
-      Vector2 VelDifVectA = Vector2Subtract(VelA, VelB);
-      float UpperDotProductA = Vector2DotProduct(VelDiffVectA, PosDiffVectA);
-      float magnitudeSqrA = Vector2DistanceSqr(PosA, PosB);
-      float fractionA = UpperDotProductA / magnitudeSqrA;
-      
-      /*v2' */
-      Vector2 PosDiffVectB = Vector2Subtract(PosB, PosA);
-      Vector2 VelDiffVectB = Vector2Subtract(VelB, VelA);
-      float UpperDotProductB = Vector2DotProduct(VelDiffVectB, PosDiffVectB);
-      float magnitudeSqrB = Vector2DistanceSqr(PosB, PosA);
-      float fractionB = UpperDotProductB / magnitudeSqrB;
-      
-      VelA = Vector2Subtract(VelA, Vector2Scale(PosDiffVectA, fractionA));
-      VelB = Vector2Subtract(VelB, Vector2Scale(PosDiffVectB, fractionB));
+          Pos[i] = Vector2Add(Pos[i], displacementVector);
+          Pos[j] = Vector2Subtract(Pos[j], displacementVector);
+
+          //Stupid freaking wikipedia math
+          //v1'
+          Vector2 PosDiffVectI = Vector2Subtract(Pos[i], Pos[j]);
+          Vector2 VelDiffVectI = Vector2Subtract(Vel[i], Vel[j]);
+          float UpperDotProductI = Vector2DotProduct(VelDiffVectI, PosDiffVectI);
+          float magnitudeSqrI = Vector2DistanceSqr(Pos[i], Pos[j]);
+          float fractionI = UpperDotProductI / magnitudeSqrI;
+
+          //v2'
+          Vector2 PosDiffVectJ = Vector2Subtract(Pos[j], Pos[i]);
+          Vector2 VelDiffVectJ = Vector2Subtract(Vel[j], Vel[i]);
+          float UpperDotProductJ = Vector2DotProduct(VelDiffVectJ, PosDiffVectJ);
+          float magnitudeSqrJ = Vector2DistanceSqr(Pos[j], Pos[i]);
+          float fractionJ = UpperDotProductJ / magnitudeSqrJ;
+
+          Vel[i] = Vector2Subtract(Vel[i], Vector2Scale(PosDiffVectI, fractionI));
+          Vel[j] = Vector2Subtract(Vel[j], Vector2Scale(PosDiffVectJ, fractionJ));
+
+
+        }
+      }
 
     }
-
 
     BeginDrawing();
-    ClearBackground(BLACK);
-    DrawCircleV(PosA, RADIUS, RED);
-    DrawCircleV(PosB, RADIUS, BLUE);
+    for (int i = 0; i < MAX_BALLS; i++)
+    {
+      ClearBackground(BLACK);
+      DrawCircleV(Pos[i], RADIUS, Colour[i]);
+    }
     EndDrawing();
   }
 
