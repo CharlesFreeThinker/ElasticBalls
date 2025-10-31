@@ -14,7 +14,7 @@ Bouncy balls and math
 - Content creep much
 
 
-# Thankful to 
+# Thankful for 
 - WIKIPEDIA https://en.wikipedia.org/wiki/Elastic_collision
     For their awesome math that didnt take me too long to decrypt
 - My Mom
