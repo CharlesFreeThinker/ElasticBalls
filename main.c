@@ -15,6 +15,9 @@ typedef struct {
         Color Color;
 }Circle;
 
+void borderCollision(Circle *Circles, int i);
+void seperateAndBounce(Circle *Circles, int i, int j);
+
 int main(void)
 {
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "BALLS");
@@ -48,9 +51,36 @@ int main(void)
                 {
 
                         Circles[i].Pos = Vector2Add(Circles[i].Pos, Circles[i].Vel);
-     
-                        //Border Collision
-                        if(Circles[i].Pos.x < RADIUS)
+                        borderCollision(Circles, i);
+
+                        for(int j = i + 1; j < MAX_BALLS; j++)
+                        {
+                                if(Vector2Distance(Circles[i].Pos, Circles[j].Pos) <= 2.f * RADIUS)
+                                {
+                                        seperateAndBounce(Circles, i, j);
+                                }
+        
+                        }
+                }
+  
+                BeginDrawing();
+                for (int i = 0; i < MAX_BALLS; i++)
+                {
+                        const char *fpsText = TextFormat("FPS: %d", GetFPS());
+                        DrawText(fpsText, 10, 10, 20, RED);
+                        ClearBackground(BLACK);
+                        DrawCircleV(Circles[i].Pos, RADIUS, Circles[i].Color);
+                }
+                EndDrawing();
+        }
+        CloseWindow();
+        free(Circles);
+        return 0;
+}
+
+void borderCollision(Circle *Circles, int i)
+{
+        if(Circles[i].Pos.x < RADIUS)
                         {
                                 Circles[i].Pos.x = RADIUS;
                                 Circles[i].Vel.x *= -1;
@@ -70,52 +100,29 @@ int main(void)
                                 Circles[i].Pos.y = SCREEN_HEIGHT - RADIUS;
                                 Circles[i].Vel.y *= -1;
                         }
+}
+void seperateAndBounce(Circle *Circles, int i, int j)
+{
+        Vector2 displacementDirection= Vector2Normalize(Vector2Subtract(Circles[i].Pos, Circles[j].Pos));
+        float displacementDistance = (2.f * RADIUS - Vector2Distance(Circles[i].Pos, Circles[j].Pos)) / 2.f;
+        Vector2 displacementVector = Vector2Scale(displacementDirection, displacementDistance);
 
-                        for(int j = i + 1; j < MAX_BALLS; j++)
-                        {
-                                //its quite unrealistic if a ball is inside another ball...
-                                if(Vector2Distance(Circles[i].Pos, Circles[j].Pos) <= 2.f * RADIUS)
-                                {
-                                //Seperation
-                                Vector2 normalized = Vector2Normalize(Vector2Subtract(Circles[i].Pos, Circles[j].Pos));
-                                float displacement = (2.f * RADIUS - Vector2Distance(Circles[i].Pos, Circles[j].Pos)) / 2.f;
-                                Vector2 displacementVector = Vector2Scale(normalized, displacement);
-
-                                Circles[i].Pos = Vector2Add(Circles[i].Pos, displacementVector);
-                                Circles[j].Pos = Vector2Subtract(Circles[j].Pos, displacementVector);
-
-                                //Stupid freaking wikipedia math
-                                //v1'
-                                Vector2 PosDiffVect = Vector2Subtract(Circles[i].Pos, Circles[j].Pos);
-                                Vector2 VelDiffVect = Vector2Subtract(Circles[i].Vel, Circles[j].Vel);
-                                float magnitudeSqr = Vector2DistanceSqr(Circles[i].Pos, Circles[j].Pos);
-                                float UpperDotProduct = Vector2DotProduct(VelDiffVect, PosDiffVect);
-                                float fractionI = UpperDotProduct / magnitudeSqr;
-                                
-                                Circles[i].Vel = Vector2Subtract(Circles[i].Vel, Vector2Scale(PosDiffVect, fractionI));
-
-                                //v2'
-                                PosDiffVect = Vector2Scale(PosDiffVect, -1);
-                                VelDiffVect = Vector2Scale(VelDiffVect, -1);
-                                float fractionJ = UpperDotProduct / magnitudeSqr;
- 
-                                Circles[j].Vel = Vector2Subtract(Circles[j].Vel, Vector2Scale(PosDiffVect, fractionJ));
-                                }
+        Circles[i].Pos = Vector2Add(Circles[i].Pos, displacementVector);
+        Circles[j].Pos = Vector2Subtract(Circles[j].Pos, displacementVector);
         
-                        }
-                }
-  
-                BeginDrawing();
-                for (int i = 0; i < MAX_BALLS; i++)
-                {
-                        const char *fpsText = TextFormat("FPS: %d", GetFPS());
-                        DrawText(fpsText, 10, 10, 20, RED);
-                        ClearBackground(BLACK);
-                        DrawCircleV(Circles[i].Pos, RADIUS, Circles[i].Color);
-                }
-                EndDrawing();
-        }
-        CloseWindow();
-        free(Circles);
-        return 0;
+        //v1'
+        Vector2 PosDiffVect = Vector2Subtract(Circles[i].Pos, Circles[j].Pos);
+        Vector2 VelDiffVect = Vector2Subtract(Circles[i].Vel, Circles[j].Vel);
+        float magnitudeSqr = Vector2DistanceSqr(Circles[i].Pos, Circles[j].Pos);
+        float UpperDotProduct = Vector2DotProduct(VelDiffVect, PosDiffVect);
+        float fractionI = UpperDotProduct / magnitudeSqr;
+                                
+        Circles[i].Vel = Vector2Subtract(Circles[i].Vel, Vector2Scale(PosDiffVect, fractionI));
+
+        //v2'
+        PosDiffVect = Vector2Scale(PosDiffVect, -1);
+        VelDiffVect = Vector2Scale(VelDiffVect, -1);
+        float fractionJ = UpperDotProduct / magnitudeSqr;
+ 
+        Circles[j].Vel = Vector2Subtract(Circles[j].Vel, Vector2Scale(PosDiffVect, fractionJ));
 }
