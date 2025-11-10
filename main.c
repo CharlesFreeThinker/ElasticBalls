@@ -15,56 +15,60 @@ typedef struct {
         Color Color;
 }Circle;
 
+int ballCount = 0;
+
 void borderCollision(Circle *Circles, int i);
 void seperateAndBounce(Circle *Circles, int i, int j);
 
 int main(void)
 {
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "BALLS");
- 
-        Circle *Circles = malloc(MAX_BALLS * sizeof(Circle));
-        if(Circles == NULL)
-        {
-                printf("Malloc failed.\n");
-                return 1;
-        }
-
-
-        for (int i = 0; i < MAX_BALLS; i++)
-        {
-                Circles[i].Pos.x = GetRandomValue(RADIUS, SCREEN_WIDTH - RADIUS);
-                Circles[i].Pos.y = GetRandomValue(RADIUS, SCREEN_HEIGHT - RADIUS);
-
-                Circles[i].Vel.x = GetRandomValue(-5, 5);
-                Circles[i].Vel.y = GetRandomValue(-5, 5);
-  
-                Circles[i].Color.r = GetRandomValue(0,255);
-                Circles[i].Color.g = GetRandomValue(0,255);
-                Circles[i].Color.b = GetRandomValue(0,255);
-                Circles[i].Color.a = 255;
-        }
-  
+        Circle *Circles = NULL;
+        
         SetTargetFPS(FPS);
         while(!WindowShouldClose())
         {
-                for (int i = 0; i < MAX_BALLS; i++)
-                {
-
-                        Circles[i].Pos = Vector2Add(Circles[i].Pos, Circles[i].Vel);
-                        borderCollision(Circles, i);
-
-                        for(int j = i + 1; j < MAX_BALLS; j++)
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+               {
+                        ballCount += 1;
+                        Circles = realloc(Circles, ballCount * sizeof(Circle));
+                        if(Circles == NULL)
                         {
-                                if(Vector2Distance(Circles[i].Pos, Circles[j].Pos) <= 2.f * RADIUS)
-                                {
-                                        seperateAndBounce(Circles, i, j);
-                                }
-        
+                                printf("realloc failed.\n");
+                                return 1;
                         }
+
+                        Circles[ballCount - 1].Pos = GetMousePosition();
+                       
+                        Circles[ballCount - 1].Vel.x = GetRandomValue(-5, 5);
+                        Circles[ballCount - 1].Vel.y = GetRandomValue(-5, 5);
+                        
+                        Circles[ballCount - 1].Color.r = GetRandomValue(0,255);
+                        Circles[ballCount - 1].Color.g = GetRandomValue(0,255);
+                        Circles[ballCount - 1].Color.b = GetRandomValue(0,255);
+                        Circles[ballCount - 1].Color.a = 255;
+                }
+
+                if(ballCount > 0)
+                {
+                        for (int i = 0; i < ballCount; i++)
+                                {
+
+                                        Circles[i].Pos = Vector2Add(Circles[i].Pos, Circles[i].Vel);
+                                        borderCollision(Circles, i);
+
+                                        for(int j = i + 1; j < ballCount; j++)
+                                        {
+                                                if(Vector2Distance(Circles[i].Pos, Circles[j].Pos) <= 2.f * RADIUS)
+                                                {
+                                                        seperateAndBounce(Circles, i, j);
+                                                }
+                                        }
+                                }
                 }
   
                 BeginDrawing();
-                for (int i = 0; i < MAX_BALLS; i++)
+                for (int i = 0; i < ballCount; i++)
                 {
                         const char *fpsText = TextFormat("FPS: %d", GetFPS());
                         DrawText(fpsText, 10, 10, 20, RED);
