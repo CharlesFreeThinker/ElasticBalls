@@ -33,6 +33,10 @@ int main(void)
                {
                        ballCount += 1;
                        Circles = spawnCircle(Circles);
+                       if (Circles == NULL)
+                        {
+                                return 0;
+                        }
                }
 
                 if(ballCount > 0)
