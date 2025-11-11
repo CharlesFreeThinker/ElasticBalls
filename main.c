@@ -19,6 +19,7 @@ int ballCount = 0;
 
 void borderCollision(Circle *Circles, int i);
 void seperateAndBounce(Circle *Circles, int i, int j);
+Circle* spawnCircle(Circle *Circles);
 
 int main(void)
 {
@@ -30,24 +31,9 @@ int main(void)
         {
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
                {
-                        ballCount += 1;
-                        Circles = realloc(Circles, ballCount * sizeof(Circle));
-                        if(Circles == NULL)
-                        {
-                                printf("realloc failed.\n");
-                                return 1;
-                        }
-
-                        Circles[ballCount - 1].Pos = GetMousePosition();
-                       
-                        Circles[ballCount - 1].Vel.x = GetRandomValue(-5, 5);
-                        Circles[ballCount - 1].Vel.y = GetRandomValue(-5, 5);
-                        
-                        Circles[ballCount - 1].Color.r = GetRandomValue(0,255);
-                        Circles[ballCount - 1].Color.g = GetRandomValue(0,255);
-                        Circles[ballCount - 1].Color.b = GetRandomValue(0,255);
-                        Circles[ballCount - 1].Color.a = 255;
-                }
+                       ballCount += 1;
+                       Circles = spawnCircle(Circles);
+               }
 
                 if(ballCount > 0)
                 {
@@ -130,3 +116,26 @@ void seperateAndBounce(Circle *Circles, int i, int j)
  
         Circles[j].Vel = Vector2Subtract(Circles[j].Vel, Vector2Scale(PosDiffVect, fractionJ));
 }
+
+Circle* spawnCircle(Circle *Circles)
+{
+        Circles = realloc(Circles, ballCount * sizeof(Circle));
+        if(Circles == NULL)
+        {
+                printf("realloc failed.\n");
+                return NULL;
+        }
+
+        Circles[ballCount - 1].Pos = GetMousePosition();
+       
+        Circles[ballCount - 1].Vel.x = GetRandomValue(-5, 5);
+        Circles[ballCount - 1].Vel.y = GetRandomValue(-5, 5);
+        
+        Circles[ballCount - 1].Color.r = GetRandomValue(0,255);
+        Circles[ballCount - 1].Color.g = GetRandomValue(0,255);
+        Circles[ballCount - 1].Color.b = GetRandomValue(0,255);
+        Circles[ballCount - 1].Color.a = 255;
+
+        return Circles;
+}
+
