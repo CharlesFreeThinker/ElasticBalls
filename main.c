@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "raylib.h"
 #include "raymath.h"
+#include "math.h"
 
 #define SCREEN_WIDTH 1000
 #define SCREEN_HEIGHT 1000
@@ -15,26 +16,58 @@ typedef struct {
 }Circle;
 
 int ballCount = 0;
+int maxBalls = (SCREEN_WIDTH * SCREEN_HEIGHT) / ( 2 * RADIUS);
 
 void borderCollision(Circle *Circles, int i);
 void seperateAndBounce(Circle *Circles, int i, int j);
-Circle* spawnCircle(Circle *Circles);
+Circle* spawnCircle(Circle *Circles, Vector2 Position);
 
 int main(void)
 {
+        int letterCount = 0; 
+        int addCircleAmount = 0;
         InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "BALLS");
         Circle *Circles = NULL;
         
         SetTargetFPS(FPS);
         while(!WindowShouldClose())
         {
-                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                
+                if(ballCount <= maxBalls)
                 {
-                        ballCount += 1;
-                        Circles = spawnCircle(Circles);
-                        if (Circles == NULL)
+                        if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
+                                {
+                                        ballCount += 1;
+                                        Circles = spawnCircle(Circles, GetMousePosition());
+                                        if (Circles == NULL)
+                                        {
+                                                return 0;
+                                        }
+                                }
+                        
+                        int key = GetCharPressed() - 48;
+                        if((key >= 0) && (key <= 9) && (letterCount < 3))
                         {
-                                return 0;
+                                addCircleAmount += key * pow(10, 2 - letterCount);
+                                letterCount++;
+                        }
+
+                        if(IsKeyPressed(KEY_ENTER))
+                        {
+                                
+                                for(int i = 0; i < addCircleAmount; i++)
+                                {
+                                        ballCount += 1;
+                                        Vector2 Position = {GetRandomValue(RADIUS, SCREEN_WIDTH - RADIUS),
+                                                            GetRandomValue(RADIUS, SCREEN_HEIGHT - RADIUS)};
+                                        Circles = spawnCircle(Circles, Position); 
+                                        if (Circles == NULL)
+                                        {
+                                                return 0;
+                                        }
+                                }
+                                addCircleAmount = 0;
+                                letterCount = 0;
                         }
                 }
               
@@ -60,7 +93,7 @@ int main(void)
                 for (int i = 0; i < ballCount; i++)
                 {
                         DrawText(TextFormat("FPS: %d", GetFPS()), 10, 10, 20, RED);
-                        DrawText(TextFormat("Add Circles: "), 10, 30, 20, RED);
+                        DrawText(TextFormat("Add Circles: %d", addCircleAmount), 10, 30, 20, RED);
                         ClearBackground(BLACK);
                         DrawCircleV(Circles[i].Pos, RADIUS, Circles[i].Color);
                 }
@@ -119,7 +152,7 @@ void seperateAndBounce(Circle *Circles, int i, int j)
         Circles[j].Vel = Vector2Subtract(Circles[j].Vel, Vector2Scale(PosDiffVect, fractionJ));
 }
 
-Circle* spawnCircle(Circle *Circles)
+Circle* spawnCircle(Circle *Circles, Vector2 Position)
 {
         Circles = realloc(Circles, ballCount * sizeof(Circle));
         if(Circles == NULL)
@@ -128,7 +161,7 @@ Circle* spawnCircle(Circle *Circles)
                 return NULL;
         }
 
-        Circles[ballCount - 1].Pos = GetMousePosition();
+        Circles[ballCount - 1].Pos = Position;
        
         Circles[ballCount - 1].Vel.x = GetRandomValue(-5, 5);
         Circles[ballCount - 1].Vel.y = GetRandomValue(-5, 5);
