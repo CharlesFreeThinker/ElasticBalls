@@ -7,7 +7,6 @@
 #define SCREEN_HEIGHT 1000
 #define FPS 60
 #define RADIUS 25.f
-#define MAX_BALLS 50
 
 typedef struct {
         Vector2 Pos;
@@ -30,38 +29,38 @@ int main(void)
         while(!WindowShouldClose())
         {
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-               {
-                       ballCount += 1;
-                       Circles = spawnCircle(Circles);
-                       if (Circles == NULL)
+                {
+                        ballCount += 1;
+                        Circles = spawnCircle(Circles);
+                        if (Circles == NULL)
                         {
                                 return 0;
                         }
-               }
+                }
+              
 
                 if(ballCount > 0)
                 {
                         for (int i = 0; i < ballCount; i++)
+                        {
+                                Circles[i].Pos = Vector2Add(Circles[i].Pos, Circles[i].Vel);
+                                borderCollision(Circles, i);
+
+                                for(int j = i + 1; j < ballCount; j++)
                                 {
-
-                                        Circles[i].Pos = Vector2Add(Circles[i].Pos, Circles[i].Vel);
-                                        borderCollision(Circles, i);
-
-                                        for(int j = i + 1; j < ballCount; j++)
+                                        if(Vector2Distance(Circles[i].Pos, Circles[j].Pos) <= 2.f * RADIUS)
                                         {
-                                                if(Vector2Distance(Circles[i].Pos, Circles[j].Pos) <= 2.f * RADIUS)
-                                                {
-                                                        seperateAndBounce(Circles, i, j);
-                                                }
+                                                seperateAndBounce(Circles, i, j);
                                         }
                                 }
+                        }
                 }
   
                 BeginDrawing();
                 for (int i = 0; i < ballCount; i++)
                 {
-                        const char *fpsText = TextFormat("FPS: %d", GetFPS());
-                        DrawText(fpsText, 10, 10, 20, RED);
+                        DrawText(TextFormat("FPS: %d", GetFPS()), 10, 10, 20, RED);
+                        DrawText(TextFormat("Add Circles: "), 10, 30, 20, RED);
                         ClearBackground(BLACK);
                         DrawCircleV(Circles[i].Pos, RADIUS, Circles[i].Color);
                 }
@@ -75,25 +74,25 @@ int main(void)
 void borderCollision(Circle *Circles, int i)
 {
         if(Circles[i].Pos.x < RADIUS)
-                        {
-                                Circles[i].Pos.x = RADIUS;
-                                Circles[i].Vel.x *= -1;
-                        }
-                        else if(Circles[i].Pos.x > SCREEN_WIDTH - RADIUS)
-                        {
-                                Circles[i].Pos.x = SCREEN_WIDTH - RADIUS;
-                                Circles[i].Vel.x *= -1;
-                        }
-                        if(Circles[i].Pos.y < RADIUS)
-                        {
-                                Circles[i].Pos.y = RADIUS;
-                                Circles[i].Vel.y *= -1;
-                        }
-                        else if(Circles[i].Pos.y > SCREEN_HEIGHT - RADIUS)
-                        {
-                                Circles[i].Pos.y = SCREEN_HEIGHT - RADIUS;
-                                Circles[i].Vel.y *= -1;
-                        }
+        {
+                Circles[i].Pos.x = RADIUS;
+                Circles[i].Vel.x *= -1;
+        }
+        else if(Circles[i].Pos.x > SCREEN_WIDTH - RADIUS)
+        {
+                Circles[i].Pos.x = SCREEN_WIDTH - RADIUS;
+                Circles[i].Vel.x *= -1;
+        }
+        if(Circles[i].Pos.y < RADIUS)
+        {
+                Circles[i].Pos.y = RADIUS;
+                Circles[i].Vel.y *= -1;
+        }
+        else if(Circles[i].Pos.y > SCREEN_HEIGHT - RADIUS)
+        {
+                Circles[i].Pos.y = SCREEN_HEIGHT - RADIUS;
+                Circles[i].Vel.y *= -1;
+        }
 }
 void seperateAndBounce(Circle *Circles, int i, int j)
 {
@@ -115,7 +114,6 @@ void seperateAndBounce(Circle *Circles, int i, int j)
 
         //v2'
         PosDiffVect = Vector2Scale(PosDiffVect, -1);
-        VelDiffVect = Vector2Scale(VelDiffVect, -1);
         float fractionJ = UpperDotProduct / magnitudeSqr;
  
         Circles[j].Vel = Vector2Subtract(Circles[j].Vel, Vector2Scale(PosDiffVect, fractionJ));
@@ -142,4 +140,3 @@ Circle* spawnCircle(Circle *Circles)
 
         return Circles;
 }
-
